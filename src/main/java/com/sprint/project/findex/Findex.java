@@ -1,3 +1,5 @@
+package com.sprint.project.findex;
+
 public class Findex {
 
   public static void main(String[] args) {
