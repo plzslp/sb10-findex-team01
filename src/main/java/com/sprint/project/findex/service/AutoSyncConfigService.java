@@ -1,10 +1,10 @@
-package com.sprint.project.findex.autosyncconfig.service;
+package com.sprint.project.findex.service;
 
-import com.sprint.project.findex.dto.AutoSyncConfigDto;
-import com.sprint.project.findex.dto.AutoSyncConfigUpdateRequest;
-import com.sprint.project.findex.autosyncconfig.entity.AutoSyncConfig;
-import com.sprint.project.findex.autosyncconfig.mapper.AutoSyncConfigMapper;
-import com.sprint.project.findex.autosyncconfig.repository.AutoSyncConfigRepository;
+import com.sprint.project.findex.dto.autosyncconfig.AutoSyncConfigDto;
+import com.sprint.project.findex.dto.autosyncconfig.AutoSyncConfigUpdateRequest;
+import com.sprint.project.findex.entity.AutoSyncConfig;
+import com.sprint.project.findex.mapper.AutoSyncConfigMapper;
+import com.sprint.project.findex.repository.AutoSyncConfigRepository;
 import com.sprint.project.findex.IndexInfo;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;

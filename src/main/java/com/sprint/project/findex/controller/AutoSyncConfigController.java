@@ -1,9 +1,9 @@
 package com.sprint.project.findex.controller;
 
-import com.sprint.project.findex.dto.AutoSyncConfigDto;
-import com.sprint.project.findex.dto.AutoSyncConfigUpdateRequest;
+import com.sprint.project.findex.dto.autosyncconfig.AutoSyncConfigDto;
+import com.sprint.project.findex.dto.autosyncconfig.AutoSyncConfigUpdateRequest;
 import com.sprint.project.findex.dto.ErrorResponse;
-import com.sprint.project.findex.autosyncconfig.service.AutoSyncConfigService;
+import com.sprint.project.findex.service.AutoSyncConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

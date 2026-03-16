@@ -1,4 +1,4 @@
-package com.sprint.project.findex.dto;
+package com.sprint.project.findex.dto.autosyncconfig;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

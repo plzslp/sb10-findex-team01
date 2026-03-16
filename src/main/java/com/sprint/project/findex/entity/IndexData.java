@@ -1,26 +1,20 @@
-package com.sprint.project.findex.indexdata.entity;
+package com.sprint.project.findex.entity;
 
-import com.sprint.project.findex.global.entity.DeletedStatus;
-import com.sprint.project.findex.global.entity.SourceType;
-import com.sprint.project.findex.IndexInfo;
+import com.sprint.project.findex.entity.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.Instant;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,18 +22,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @Entity
 @Table(name = "index_datas")
-public class IndexData {
+public class IndexData extends BaseEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
-  @CreatedDate
-  @Column(nullable = false, updatable = false)
-  private Instant createdAt;
-
-  @LastModifiedDate
-  private Instant updatedAt;
   //지수 정보
   @ManyToOne
   @JoinColumn(name = "index_info_id")
@@ -71,18 +55,19 @@ public class IndexData {
   private Double fluctuationRate;
   //지수에 포함된 종목의 거래량 총합
   @Column(nullable = false)
-  private Double tradingQuantity;
+  private Long tradingQuantity;
   //지수에 포함된 종목의 거래대금 총합
   @Column(nullable = false)
-  private Long tradingPrice;
+  private BigInteger tradingPrice;
   //지수에 포함된 종목의 시가 총액
   @Column(nullable = false)
-  private Long marketTotalAmount;
+  private BigInteger marketTotalAmount;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "ACTIVE")
   @Enumerated(value = EnumType.STRING)
-  private DeletedStatus isDeleted = DeletedStatus.ACTIVE;
+  private DeletedStatus isDeleted;
 
+  @Builder
   public IndexData(
       IndexInfo indexInfo,
       LocalDate baseDate,
@@ -93,9 +78,10 @@ public class IndexData {
       Double lowPrice,
       Double versus,
       Double fluctuationRate,
-      Double tradingQuantity,
-      Long tradingPrice,
-      Long marketTotalAmount
+      Long tradingQuantity,
+      BigInteger tradingPrice,
+      BigInteger marketTotalAmount,
+      DeletedStatus isDeleted
   ) {
     this.indexInfo = indexInfo;
     this.baseDate = baseDate;
@@ -109,49 +95,50 @@ public class IndexData {
     this.tradingQuantity = tradingQuantity;
     this.tradingPrice = tradingPrice;
     this.marketTotalAmount = marketTotalAmount;
+    this.isDeleted = isDeleted;
   }
 
-  public void updateSourceType(SourceType sourceType) {
-    this.sourceType = sourceType;
+  public void updateSourceTypeToUser() {
+    this.sourceType = SourceType.USER;
   }
 
   public void updateMarketPrice(Double marketPrice) {
-    this.marketPrice = marketPrice;
+    updateIfChanged(this.marketPrice, marketPrice, val -> this.marketPrice = val);
   }
 
   public void updateClosingPrice(Double closingPrice) {
-    this.closingPrice = closingPrice;
+    updateIfChanged(this.closingPrice, closingPrice, val -> this.closingPrice = val);
   }
 
   public void updateHighPrice(Double highPrice) {
-    this.highPrice = highPrice;
+    updateIfChanged(this.highPrice, highPrice, val -> this.highPrice = val);
   }
 
   public void updateLowPrice(Double lowPrice) {
-    this.lowPrice = lowPrice;
+    updateIfChanged(this.lowPrice, lowPrice, val -> this.lowPrice = val);
   }
 
   public void updateVersus(Double versus) {
-    this.versus = versus;
+    updateIfChanged(this.versus, versus, val -> this.versus = val);
   }
 
   public void updateFluctuationRate(Double fluctuationRate) {
-    this.fluctuationRate = fluctuationRate;
+    updateIfChanged(this.fluctuationRate, fluctuationRate, val -> this.fluctuationRate = val);
   }
 
-  public void updateTradingQuantity(Double tradingQuantity) {
-    this.tradingQuantity = tradingQuantity;
+  public void updateTradingQuantity(Long tradingQuantity) {
+    updateIfChanged(this.tradingQuantity, tradingQuantity, val -> this.tradingQuantity = val);
   }
 
-  public void updateTradingPrice(Long tradingPrice) {
-    this.tradingPrice = tradingPrice;
+  public void updateTradingPrice(BigInteger tradingPrice) {
+    updateIfChanged(this.tradingPrice, tradingPrice, val -> this.tradingPrice = val);
   }
 
-  public void updateMarketTotalAmount(Long marketTotalAmount) {
-    this.marketTotalAmount = marketTotalAmount;
+  public void updateMarketTotalAmount(BigInteger marketTotalAmount) {
+    updateIfChanged(this.marketTotalAmount, marketTotalAmount, val -> this.marketTotalAmount = val);
   }
 
   public void updateIsDeleted(DeletedStatus isDeleted) {
-    this.isDeleted = isDeleted;
+    updateIfChanged(this.isDeleted, isDeleted, val -> this.isDeleted = val);
   }
 }

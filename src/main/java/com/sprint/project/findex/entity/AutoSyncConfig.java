@@ -1,4 +1,4 @@
-package com.sprint.project.findex.autosyncconfig.entity;
+package com.sprint.project.findex.entity;
 
 import com.sprint.project.findex.IndexInfo;
 import jakarta.persistence.Column;
