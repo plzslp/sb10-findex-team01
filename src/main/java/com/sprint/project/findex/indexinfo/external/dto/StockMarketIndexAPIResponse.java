@@ -3,11 +3,17 @@ package com.sprint.project.findex.indexinfo.external.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigInteger;
-import java.time.LocalDate;
 import java.util.List;
 
-public record StockMarketIndexResponse(@JsonProperty("header") OpenAPIHeaderDto header,
-                                       @JsonProperty("body") BodyStockMarketIndexDto bodyDto) {
+public record StockMarketIndexAPIResponse(
+    @JsonProperty("response") StockMarketIndexResponse response) {
+
+  public record StockMarketIndexResponse(
+      @JsonProperty("header") OpenAPIHeaderDto header,
+      @JsonProperty("body") BodyStockMarketIndexDto bodyDto
+  ) {
+
+  }
 
   public record OpenAPIHeaderDto(@NotNull String resultCode, @NotNull String resultMsg) {
 
@@ -15,7 +21,7 @@ public record StockMarketIndexResponse(@JsonProperty("header") OpenAPIHeaderDto 
 
   public record BodyStockMarketIndexDto(@NotNull int numOfRows, @NotNull int pageNo,
                                         @NotNull int totalCount,
-                                        @NotNull StockMarketIndexResponse.RawStockMarketIndexDto items) {
+                                        @NotNull StockMarketIndexAPIResponse.RawStockMarketIndexDto items) {
 
   }
 
@@ -23,7 +29,7 @@ public record StockMarketIndexResponse(@JsonProperty("header") OpenAPIHeaderDto 
 
   }
 
-  public record IndexDto(@JsonProperty("basDt") @NotNull LocalDate baseDate,
+  public record IndexDto(@JsonProperty("basDt") @NotNull String baseDate,
                          @JsonProperty("idxNm") @NotNull String indexName,
                          @JsonProperty("idxCsf") @NotNull String indexClassification,
                          @JsonProperty("epyItmsCnt") @NotNull Long employedItemsCount,
@@ -35,15 +41,16 @@ public record StockMarketIndexResponse(@JsonProperty("header") OpenAPIHeaderDto 
                          @JsonProperty("lopr") @NotNull Double lowPrice,
                          @JsonProperty("trqu") @NotNull Long tradingQuantity,
                          @JsonProperty("trPrc") @NotNull BigInteger tradingPrice,
-                         @JsonProperty("basPntm") @NotNull LocalDate basePointInTime,
+                         @JsonProperty("basPntm") @NotNull String basePointInTime,
+                         // todo: yyyyMMdd 형식으로 들어와서 String으로 받아야할 것 같음?
                          @JsonProperty("lstgMrktTotAmt") @NotNull BigInteger marketTotalAmount,
                          @JsonProperty("basIdx") @NotNull Double baseIndex,
                          Long lsYrEdVsFltRg,
                          Double lsYrEdVsFltRt,
                          Double yrWRcrdHgst,
-                         LocalDate yrWRcrdHgstDt,
+                         String yrWRcrdHgstDt,
                          Long yrWRcrdLwst,
-                         LocalDate yrWRcrdLwstDt) {
+                         String yrWRcrdLwstDt) {
 
   }
 }
