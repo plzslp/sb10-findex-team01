@@ -1,4 +1,4 @@
-package com.sprint.project.findex.autosyncconfig.dto;
+package com.sprint.project.findex.dto;
 
 import lombok.AccessLevel;
 import lombok.Getter;

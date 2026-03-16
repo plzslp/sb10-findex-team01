@@ -1,6 +1,6 @@
 package com.sprint.project.findex.autosyncconfig.mapper;
 
-import com.sprint.project.findex.autosyncconfig.dto.AutoSyncConfigDto;
+import com.sprint.project.findex.dto.AutoSyncConfigDto;
 import com.sprint.project.findex.autosyncconfig.entity.AutoSyncConfig;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

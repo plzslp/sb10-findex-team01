@@ -1,7 +1,7 @@
 package com.sprint.project.findex.autosyncconfig.service;
 
-import com.sprint.project.findex.autosyncconfig.dto.AutoSyncConfigDto;
-import com.sprint.project.findex.autosyncconfig.dto.AutoSyncConfigUpdateRequest;
+import com.sprint.project.findex.dto.AutoSyncConfigDto;
+import com.sprint.project.findex.dto.AutoSyncConfigUpdateRequest;
 import com.sprint.project.findex.autosyncconfig.entity.AutoSyncConfig;
 import com.sprint.project.findex.autosyncconfig.mapper.AutoSyncConfigMapper;
 import com.sprint.project.findex.autosyncconfig.repository.AutoSyncConfigRepository;

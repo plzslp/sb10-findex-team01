@@ -1,19 +1,16 @@
-package com.sprint.project.findex.autosyncconfig.controller;
+package com.sprint.project.findex.controller;
 
-import com.sprint.project.findex.autosyncconfig.dto.AutoSyncConfigDto;
-import com.sprint.project.findex.autosyncconfig.dto.AutoSyncConfigUpdateRequest;
-import com.sprint.project.findex.autosyncconfig.dto.ErrorResponse;
-import com.sprint.project.findex.autosyncconfig.entity.AutoSyncConfig;
+import com.sprint.project.findex.dto.AutoSyncConfigDto;
+import com.sprint.project.findex.dto.AutoSyncConfigUpdateRequest;
+import com.sprint.project.findex.dto.ErrorResponse;
 import com.sprint.project.findex.autosyncconfig.service.AutoSyncConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PatchMapping;
