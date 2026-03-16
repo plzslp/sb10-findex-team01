@@ -1,8 +1,8 @@
-package com.sprint.project.findex.indexdata.repository;
+package com.sprint.project.findex.repository;
 
-import com.sprint.project.findex.global.entity.DeletedStatus;
-import com.sprint.project.findex.indexdata.entity.IndexData;
-import com.sprint.project.findex.indexinfo.entity.IndexInfo;
+import com.sprint.project.findex.entity.DeletedStatus;
+import com.sprint.project.findex.entity.IndexData;
+import com.sprint.project.findex.entity.IndexInfo;
 import java.time.LocalDate;
 import org.springframework.data.jpa.repository.JpaRepository;
 

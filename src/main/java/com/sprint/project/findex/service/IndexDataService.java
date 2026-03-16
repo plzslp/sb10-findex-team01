@@ -1,14 +1,14 @@
-package com.sprint.project.findex.indexdata.service;
+package com.sprint.project.findex.service;
 
-import com.sprint.project.findex.global.entity.DeletedStatus;
-import com.sprint.project.findex.global.entity.SourceType;
-import com.sprint.project.findex.indexdata.dto.IndexDataCreateRequest;
-import com.sprint.project.findex.indexdata.dto.IndexDataDto;
-import com.sprint.project.findex.indexdata.entity.IndexData;
-import com.sprint.project.findex.indexdata.mapper.IndexDataMapper;
-import com.sprint.project.findex.indexdata.repository.IndexDataRepository;
-import com.sprint.project.findex.indexinfo.entity.IndexInfo;
-import com.sprint.project.findex.indexinfo.repository.IndexInfoRepository;
+import com.sprint.project.findex.dto.IndexDataCreateRequest;
+import com.sprint.project.findex.dto.IndexDataDto;
+import com.sprint.project.findex.entity.DeletedStatus;
+import com.sprint.project.findex.entity.IndexData;
+import com.sprint.project.findex.entity.IndexInfo;
+import com.sprint.project.findex.entity.SourceType;
+import com.sprint.project.findex.mapper.IndexDataMapper;
+import com.sprint.project.findex.repository.IndexDataRepository;
+import com.sprint.project.findex.repository.IndexInfoRepository;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,20 +30,21 @@ public class IndexDataService {
 
     validateDuplicateData(request, indexInfo);
 
-    IndexData indexData = new IndexData(
-        indexInfo,
-        request.baseDate(),
-        SourceType.USER,
-        request.marketPrice(),
-        request.closingPrice(),
-        request.highPrice(),
-        request.lowPrice(),
-        request.versus(),
-        request.fluctuationRate(),
-        request.tradingQuantity(),
-        request.tradingPrice(),
-        request.marketTotalAmount()
-    );
+    IndexData indexData = IndexData.builder()
+        .indexInfo(indexInfo)
+        .baseDate(request.baseDate())
+        .sourceType(SourceType.USER)
+        .marketPrice(request.marketPrice())
+        .closingPrice(request.closingPrice())
+        .highPrice(request.highPrice())
+        .lowPrice(request.lowPrice())
+        .versus(request.versus())
+        .fluctuationRate(request.fluctuationRate())
+        .tradingQuantity(request.tradingQuantity())
+        .tradingPrice(request.tradingPrice())
+        .marketTotalAmount(request.marketTotalAmount())
+        .isDeleted(DeletedStatus.ACTIVE)
+        .build();
 
     indexDataRepository.save(indexData);
 

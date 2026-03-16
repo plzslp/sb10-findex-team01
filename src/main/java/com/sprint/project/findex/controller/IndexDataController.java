@@ -1,8 +1,8 @@
-package com.sprint.project.findex.indexdata.controller;
+package com.sprint.project.findex.controller;
 
-import com.sprint.project.findex.indexdata.dto.IndexDataCreateRequest;
-import com.sprint.project.findex.indexdata.dto.IndexDataDto;
-import com.sprint.project.findex.indexdata.service.IndexDataService;
+import com.sprint.project.findex.dto.IndexDataCreateRequest;
+import com.sprint.project.findex.dto.IndexDataDto;
+import com.sprint.project.findex.service.IndexDataService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/index-data")
+@RequestMapping("/index-data")
 @Tag(name = "지수 데이터 API")
 public class IndexDataController {
 
