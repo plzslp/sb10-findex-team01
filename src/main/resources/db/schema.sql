@@ -5,7 +5,7 @@ CREATE TABLE index_infos
   updated_at           timestamptz           NOT NULL,
   index_classification VARCHAR(240)          NOT NULL,
   index_name           VARCHAR(240)          NOT NULL,
-  employed_items_count int                   NOT NULL,
+  employed_items_count bigint                NOT NULL,
   base_point_in_time   date                  NOT NULL,
   base_index           DOUBLE PRECISION      NOT NULL,
   source_type          VARCHAR(10)           NOT NULL CHECK (source_type IN ('USER', 'OPEN_API')),
@@ -42,7 +42,7 @@ CREATE TABLE sync_jobs
   id            SERIAL PRIMARY KEY,
   job_type      VARCHAR(10) NOT NULL CHECK (job_type IN ('INDEX_INFO', 'INDEX_DATA')),
   index_info_id int         NOT NULL,
-  target_date   date        NOT NULL,
+  target_date   date,
   worker        VARCHAR(15) NOT NULL,
   job_time      timestamptz NOT NULL,
   result        VARCHAR(10) NOT NULL CHECK (result IN ('SUCCESS', 'FAIL'))

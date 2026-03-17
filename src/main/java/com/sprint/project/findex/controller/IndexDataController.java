@@ -1,12 +1,11 @@
 package com.sprint.project.findex.controller;
 
-import com.sprint.project.findex.dto.SortDirection;
+import com.sprint.project.findex.dto.dashboard.IndexChartDto;
 import com.sprint.project.findex.dto.indexdata.CursorPageIndexDataRequest;
 import com.sprint.project.findex.dto.indexdata.CursorPageResponseIndexDataDto;
 import com.sprint.project.findex.dto.indexdata.IndexDataCreateRequest;
 import com.sprint.project.findex.dto.indexdata.IndexDataCsvExportRequest;
 import com.sprint.project.findex.dto.indexdata.IndexDataDto;
-import com.sprint.project.findex.dto.indexdata.IndexDataSortField;
 import com.sprint.project.findex.dto.indexdata.IndexDataUpdateRequest;
 import com.sprint.project.findex.dto.dashboard.IndexPerformanceDto;
 import com.sprint.project.findex.dto.dashboard.RankedIndexPerformanceDto;
@@ -20,9 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +37,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RequiredArgsConstructor
 @RestController
@@ -92,22 +88,33 @@ public class IndexDataController {
 
   @GetMapping(value = "/performance/favorite")
   @Operation(summary = "주요 지수 현황 조회")
-  public ResponseEntity<List<IndexPerformanceDto>> getIndexPerformance(
-      @RequestParam("periodType") String periodType
-  ) {
-    List<IndexPerformanceDto> dto = dashboardService.findFavoriteIndexPerformance(periodType);
+  public ResponseEntity<List<IndexPerformanceDto>> getIndexPerformance (
+        @RequestParam("periodType") String periodType
+  ){
+      List<IndexPerformanceDto> dto = dashboardService.findFavoriteIndexPerformance(periodType);
 
-    return ResponseEntity.status(HttpStatus.OK).body(dto);
+      return ResponseEntity.status(HttpStatus.OK).body(dto);
   }
 
   @GetMapping(value = "/performance/rank")
   @Operation(summary = "지수 성과 랭킹 조회")
-  public ResponseEntity<List<RankedIndexPerformanceDto>> getIndexRanking(
+  public ResponseEntity<List<RankedIndexPerformanceDto>> getIndexRanking (
       @Valid @ModelAttribute RankingRequest request
   ) {
     List<RankedIndexPerformanceDto> dtos = dashboardService.findIndexRanking(request);
 
     return ResponseEntity.status(HttpStatus.OK).body(dtos);
+  }
+
+  @GetMapping(value = "/{id}/chart")
+  @Operation(summary = "지수 차트 조회")
+  public ResponseEntity<IndexChartDto> getIndexChart(
+      @PathVariable Long id,
+      @RequestParam("periodType") String periodType
+  ) {
+    IndexChartDto dto = dashboardService.findIndexChart(id, periodType);
+
+    return ResponseEntity.status(HttpStatus.OK).body(dto);
   }
 
   @GetMapping(value = "/export/csv")
