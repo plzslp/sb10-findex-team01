@@ -14,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,7 +44,7 @@ public class SyncJob {
 
   // 지수 데이터 연동 대상 날짜
   @Column
-  private Instant targetDate;
+  private LocalDate targetDate;
 
   // 작업자(사용자 or 배치)
   @Column(length = 15, nullable = false)
@@ -59,7 +60,7 @@ public class SyncJob {
   @Enumerated(EnumType.STRING)
   private ResultType result;
 
-  public SyncJob(IndexInfo indexInfo, JobType jobType, Instant targetDate, String worker,
+  public SyncJob(IndexInfo indexInfo, JobType jobType, LocalDate targetDate, String worker,
       ResultType result) {
     this.indexInfo = indexInfo;
     this.jobType = jobType;
