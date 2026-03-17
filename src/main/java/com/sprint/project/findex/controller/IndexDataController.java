@@ -1,8 +1,10 @@
 package com.sprint.project.findex.controller;
 
-import com.sprint.project.findex.dto.IndexDataCreateRequest;
-import com.sprint.project.findex.dto.IndexDataDto;
-import com.sprint.project.findex.dto.IndexDataUpdateRequest;
+import com.sprint.project.findex.dto.indexdata.CursorPageIndexDataRequest;
+import com.sprint.project.findex.dto.indexdata.CursorPageResponseIndexDataDto;
+import com.sprint.project.findex.dto.indexdata.IndexDataCreateRequest;
+import com.sprint.project.findex.dto.indexdata.IndexDataDto;
+import com.sprint.project.findex.dto.indexdata.IndexDataUpdateRequest;
 import com.sprint.project.findex.dto.dashboard.IndexChartDto;
 import com.sprint.project.findex.dto.dashboard.IndexPerformanceDto;
 import com.sprint.project.findex.dto.dashboard.RankedIndexPerformanceDto;
@@ -12,7 +14,6 @@ import com.sprint.project.findex.service.IndexDataService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -65,6 +66,15 @@ public class IndexDataController {
   ) {
     indexDataService.delete(id);
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping
+  @Operation(summary = "지수 데이터 목록 조회")
+  public ResponseEntity<CursorPageResponseIndexDataDto> findAll(
+      @Valid @ModelAttribute CursorPageIndexDataRequest request
+  ) {
+    CursorPageResponseIndexDataDto dto = indexDataService.findAll(request);
+    return ResponseEntity.status(HttpStatus.OK).body(dto);
   }
 
   @GetMapping(value = "/performance/favorite")
