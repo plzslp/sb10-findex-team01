@@ -13,9 +13,8 @@ import com.sprint.project.findex.entity.SourceType;
 import com.sprint.project.findex.entity.SyncJob;
 import com.sprint.project.findex.global.entity.JobType;
 import com.sprint.project.findex.global.entity.ResultType;
-import com.sprint.project.findex.global.exception.BusinessLogicException;
-import com.sprint.project.findex.global.exception.ExceptionCode;
-import com.sprint.project.findex.mapper.SyncJobMapper;
+import com.sprint.project.findex.global.exception.ApiException;
+import com.sprint.project.findex.global.exception.ErrorCode;
 import com.sprint.project.findex.repository.IndexDataRepository;
 import com.sprint.project.findex.repository.SyncJobRepository;
 import java.net.URLEncoder;
@@ -40,7 +39,6 @@ public class IndexSyncService {
 
   private final IndexDataRepository indexDataRepository;
   private final SyncJobRepository syncJobRepository;
-  private final SyncJobMapper syncJobMapper;
   private final ObjectMapper objectMapper;
   private final WebClient openapi;
 
@@ -95,7 +93,7 @@ public class IndexSyncService {
                 )
             );
 
-      } catch (BusinessLogicException e) {
+      } catch (Exception e) {
         // 실패 기록
         syncJobs.add(
             new SyncJob(indexInfo, JobType.INDEX_DATA,
@@ -180,7 +178,7 @@ public class IndexSyncService {
           .block(Duration.ofSeconds(5));
 
     } catch (Exception e) {
-      throw new BusinessLogicException(ExceptionCode.OPEN_API_REQUEST_FAILED, e.getMessage());
+      throw new ApiException(ErrorCode.OPEN_API_REQUEST_FAILED, e.getMessage());
     }
   }
 
@@ -191,12 +189,12 @@ public class IndexSyncService {
         response.response().body() == null ||
         response.response().body().items() == null ||
         response.response().body().items().item() == null) {
-      throw new BusinessLogicException(ExceptionCode.OPEN_API_REQUEST_FAILED);
+      throw new ApiException(ErrorCode.OPEN_API_INVALID_RESPONSE);
     }
 
     // 에러코드가 온 경우
     if (!"00".equals(response.response().header().resultCode())) {
-      throw new BusinessLogicException(ExceptionCode.OPEN_API_REQUEST_FAILED);
+      throw new ApiException(ErrorCode.OPEN_API_INVALID_RESPONSE);
     }
 
     return response.response().body().items().item();
@@ -204,7 +202,7 @@ public class IndexSyncService {
 
   // 응답 item에서 첫번째 값만 가져온다
   private StockIndexDto extractDtoFromResponse(StockMarketIndexResponse response)
-      throws BusinessLogicException {
+      throws ApiException {
     List<StockIndexDto> stockIndexDtoList = this.extractDtoListFromResponse(response);
 
     if (stockIndexDtoList.isEmpty()) {
