@@ -14,8 +14,6 @@ public class WebClientConfig {
   @Value("${OPEN_API_END_POINT}")
   private String apiEndPoint;
 
-  // WebClient Bean을 등록한다.
-  // todo: 명세에 맞게 쿼리 파라미터를 추가해야 함
   @Bean
   public WebClient webClient(WebClient.Builder builder) {
     return builder

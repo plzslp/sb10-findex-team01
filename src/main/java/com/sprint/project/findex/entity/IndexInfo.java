@@ -42,13 +42,19 @@ public class IndexInfo extends BaseEntity {
   @Column
   private boolean favorite;
 
-  @Column(nullable = false, columnDefinition = "ACTIVE")
+  @Column(nullable = false)
   @Enumerated(value = EnumType.STRING)
   private DeletedStatus isDeleted;
 
   @Builder
-  public IndexInfo(String indexClassification, String indexName, Long employedItemsCount,
-      LocalDate basePointInTime, Double baseIndex, SourceType sourceType, boolean favorite,
+  public IndexInfo(
+      String indexClassification,
+      String indexName,
+      Long employedItemsCount,
+      LocalDate basePointInTime,
+      Double baseIndex,
+      SourceType sourceType,
+      boolean favorite,
       DeletedStatus isDeleted) {
     this.indexClassification = indexClassification;
     this.indexName = indexName;
@@ -67,7 +73,7 @@ public class IndexInfo extends BaseEntity {
   public void updateByOpenAPI(StockMarketIndexAPIResponse.IndexDto indexDto) {
     this.indexClassification = indexDto.indexClassification();
     this.indexName = indexDto.indexName();
-    this.employedItemsCount = indexDto.employedItemsCount(); // todo: 타입이 다른데 짤릴 것 같음(Long to Integer)
+    this.employedItemsCount = indexDto.employedItemsCount();
     this.basePointInTime = LocalDate.parse(indexDto.basePointInTime(),
         DateTimeFormatter.ofPattern("yyyyMMdd"));
     this.sourceType = SourceType.OPEN_API;

@@ -42,7 +42,6 @@ public record StockMarketIndexAPIResponse(
                          @JsonProperty("trqu") @NotNull Long tradingQuantity,
                          @JsonProperty("trPrc") @NotNull BigInteger tradingPrice,
                          @JsonProperty("basPntm") @NotNull String basePointInTime,
-                         // todo: yyyyMMdd 형식으로 들어와서 String으로 받아야할 것 같음?
                          @JsonProperty("lstgMrktTotAmt") @NotNull BigInteger marketTotalAmount,
                          @JsonProperty("basIdx") @NotNull Double baseIndex,
                          Long lsYrEdVsFltRg,
