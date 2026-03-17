@@ -5,8 +5,8 @@ import com.sprint.project.findex.dto.openapi.StockMarketIndexResponse;
 import com.sprint.project.findex.dto.openapi.StockMarketIndexResponse.StockIndexDto;
 import com.sprint.project.findex.entity.IndexInfo;
 import com.sprint.project.findex.entity.SyncJob;
-import com.sprint.project.findex.global.exception.BusinessLogicException;
-import com.sprint.project.findex.global.exception.ExceptionCode;
+import com.sprint.project.findex.global.exception.ApiException;
+import com.sprint.project.findex.global.exception.ErrorCode;
 import com.sprint.project.findex.mapper.SyncJobMapper;
 import com.sprint.project.findex.repository.IndexInfoRepository;
 import com.sprint.project.findex.service.openapi.internal.PersistentWorker;
@@ -89,7 +89,7 @@ public class SyncJobService {
           .block(Duration.ofSeconds(5));
 
     } catch (Exception e) {
-      throw new BusinessLogicException(ExceptionCode.OPEN_API_REQUEST_FAILED, e.getMessage());
+      throw new ApiException(ErrorCode.OPEN_API_REQUEST_FAILED, e.getMessage());
     }
   }
 
