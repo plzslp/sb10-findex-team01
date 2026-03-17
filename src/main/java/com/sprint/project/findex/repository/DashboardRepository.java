@@ -3,6 +3,7 @@ package com.sprint.project.findex.repository;
 import com.sprint.project.findex.dto.dashboard.DashboardQueryDto;
 import com.sprint.project.findex.entity.IndexData;
 import com.sprint.project.findex.entity.DeletedStatus;
+import com.sprint.project.findex.repository.projection.DashboardRankingProjection;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -53,86 +54,86 @@ public interface DashboardRepository extends JpaRepository<IndexData, Long> {
       @Param("deletedStatus") DeletedStatus deletedStatus
   );
 
-  // 기간 내 전체 지수의 랭킹 조회
-  // current = 최신 데이터
-  // before = period 시작일 이후 가장 이른 데이터
-  @Query("""
-      select new com.sprint.project.findex.dto.dashboard.DashboardQueryDto(
-          i.id,
-          i.indexClassification,
-          i.indexName,
-          current.closingPrice,
-          before.closingPrice
-      )
-      from IndexInfo i
-      join IndexData current
-        on current.indexInfo.id = i.id
-       and current.isDeleted = :deletedStatus
-       and current.baseDate = (
-           select max(c.baseDate)
-           from IndexData c
-           where c.indexInfo.id = i.id
-             and c.baseDate <= :today
-             and c.isDeleted = :deletedStatus
-       )
-      join IndexData before
-        on before.indexInfo.id = i.id
-       and before.isDeleted = :deletedStatus
-       and before.baseDate = (
-           select max(b.baseDate)
-           from IndexData b
-           where b.indexInfo.id = i.id
-             and b.baseDate <= :compareDate
-             and b.isDeleted = :deletedStatus
-       )
-      where i.isDeleted = :deletedStatus
-  """)
-  List<DashboardQueryDto> findAllIndexRanking(
+  @Query(value = """
+    -- current_data: today 이하 데이터 중에서 지수별(index_info_id) 가장 최근 종가 1건을 가져옴
+    WITH current_data AS (
+        SELECT DISTINCT ON (d.index_info_id)
+               d.index_info_id,
+               d.closing_price,
+               d.base_date
+        FROM index_datas d
+        WHERE d.is_deleted = :deletedStatus
+          AND d.base_date <= :today
+        ORDER BY d.index_info_id, d.base_date DESC
+    ),
+    -- before_data: compareDate 이하 데이터 중에서 지수별 가장 최근 종가 1건을 가져옴
+    before_data AS (
+        SELECT DISTINCT ON (d.index_info_id)
+               d.index_info_id,
+               d.closing_price,
+               d.base_date
+        FROM index_datas d
+        WHERE d.is_deleted = :deletedStatus
+          AND d.base_date <= :compareDate
+        ORDER BY d.index_info_id, d.base_date DESC
+    )
+    -- index_infos와 current/before 결과를 조인해서
+    -- 랭킹 계산에 필요한 현재 종가 / 비교 종가를 한 번에 가져옴
+    SELECT
+        i.id AS id,
+        i.index_classification AS indexClassification,
+        i.index_name AS indexName,
+        c.closing_price AS currentClosingPrice,
+        b.closing_price AS beforeClosingPrice
+    FROM index_infos i
+    JOIN current_data c
+      ON c.index_info_id = i.id
+    JOIN before_data b
+      ON b.index_info_id = i.id
+    WHERE i.is_deleted = :deletedStatus
+    """, nativeQuery = true)
+  List<DashboardRankingProjection> findAllIndexRanking(
       @Param("today") LocalDate today,
       @Param("compareDate") LocalDate compareDate,
-      @Param("deletedStatus") DeletedStatus deletedStatus
+      @Param("deletedStatus") String deletedStatus
   );
 
-  // 기간 내 특정 지수의 랭킹 조회
-  // current = 최신 데이터
-  // before = period 시작일 이후 가장 이른 데이터
-  @Query("""
-      select new com.sprint.project.findex.dto.dashboard.DashboardQueryDto(
-          i.id,
-          i.indexClassification,
-          i.indexName,
-          current.closingPrice,
-          before.closingPrice
-      )
-      from IndexInfo i
-      join IndexData current
-        on current.indexInfo.id = i.id
-       and current.isDeleted = :deletedStatus
-       and current.baseDate = (
-           select max(c.baseDate)
-           from IndexData c
-           where c.indexInfo.id = i.id
-             and c.baseDate <= :today
-             and c.isDeleted = :deletedStatus
-       )
-      join IndexData before
-        on before.indexInfo.id = i.id
-       and before.isDeleted = :deletedStatus
-       and before.baseDate = (
-           select max(b.baseDate)
-           from IndexData b
-           where b.indexInfo.id = i.id
-             and b.baseDate <= :compareDate
-             and b.isDeleted = :deletedStatus
-       )
-      where i.id = :indexInfoId
-        and i.isDeleted = :deletedStatus
-  """)
-  List<DashboardQueryDto> findIndexRankingByIndexInfoId(
+  // 특정 지수 1건에 대해서만
+  // today 이하 최신 종가 1건, compareDate 이하 최신 종가 1건을 LATERAL로 각각 조회
+  @Query(value = """
+    SELECT
+        i.id AS id,
+        i.index_classification AS indexClassification,
+        i.index_name AS indexName,
+        current_data.closing_price AS currentClosingPrice,
+        before_data.closing_price AS beforeClosingPrice
+    FROM index_infos i
+    JOIN LATERAL (
+        SELECT d.closing_price, d.base_date
+        FROM index_datas d
+        WHERE d.index_info_id = i.id
+          AND d.is_deleted = :deletedStatus
+          AND d.base_date <= :today
+        ORDER BY d.base_date DESC
+        LIMIT 1
+    ) current_data ON true
+    JOIN LATERAL (
+        SELECT d.closing_price, d.base_date
+        FROM index_datas d
+        WHERE d.index_info_id = i.id
+          AND d.is_deleted = :deletedStatus
+          AND d.base_date <= :compareDate
+        ORDER BY d.base_date DESC
+        LIMIT 1
+    ) before_data ON true
+    WHERE i.id = :indexInfoId
+      AND i.is_deleted = :deletedStatus
+    """, nativeQuery = true)
+  List<DashboardRankingProjection> findIndexRankingByIndexInfoId(
       @Param("indexInfoId") Long indexInfoId,
       @Param("today") LocalDate today,
       @Param("compareDate") LocalDate compareDate,
-      @Param("deletedStatus") DeletedStatus deletedStatus
+      @Param("deletedStatus") String deletedStatus
   );
 
   // 윈도우 함수 사용으로 인한 native 쿼리 작성

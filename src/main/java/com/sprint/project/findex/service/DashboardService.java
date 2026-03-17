@@ -11,6 +11,7 @@ import com.sprint.project.findex.entity.IndexInfo;
 import com.sprint.project.findex.mapper.DashboardMapper;
 import com.sprint.project.findex.repository.DashboardRepository;
 import com.sprint.project.findex.repository.IndexInfoRepository;
+import com.sprint.project.findex.repository.projection.DashboardRankingProjection;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.sql.Date;
@@ -44,9 +45,13 @@ public class DashboardService {
     LocalDate compareDate = calculateTargetDate(today, request.periodType());
 
     // indexInfoId값이 null이면 지수 전체 조회
-    List<DashboardQueryDto> queryResult = (request.indexInfoId() == null)
-        ? dashboardRepository.findAllIndexRanking(today, compareDate, DeletedStatus.ACTIVE)
-        : dashboardRepository.findIndexRankingByIndexInfoId(request.indexInfoId(), today, compareDate, DeletedStatus.ACTIVE);
+    List<DashboardRankingProjection> projection = (request.indexInfoId() == null)
+        ? dashboardRepository.findAllIndexRanking(today, compareDate, DeletedStatus.ACTIVE.name())
+        : dashboardRepository.findIndexRankingByIndexInfoId(request.indexInfoId(), today, compareDate, DeletedStatus.ACTIVE.name());
+
+    List<DashboardQueryDto> queryResult = projection.stream()
+        .map(DashboardMapper::toQueryDto)
+        .toList();
 
     List<IndexPerformanceDto> sortedPerformances = queryResult.stream()
         .map(DashboardMapper::toIndexPerformanceDto)
