@@ -21,6 +21,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -43,79 +46,114 @@ public class SyncJobService {
   // 가장 최신의 지수 정보를 로드해 저장합니다.
   public List<SyncJobDto> syncIndexInfos(HttpServletRequest request) {
 
-    List<SyncJobDto> syncJobDtos = new ArrayList<>(); // 컨트롤러 응답
+    List<SyncJob> syncJobList = new ArrayList<>(); // response
     String requestIpAddr = request.getRemoteAddr();
+    LocalDate baseDate = getLastWeekday();
+
+    // DB에서 지수 정보 전체를 map으로 미리 불러오기 (key는 unique 체크)
+    Map<String, IndexInfo> indexInfoMap = indexInfoRepository.findAll()
+        .stream()
+        .collect(Collectors.toMap(
+            idxInfo -> idxInfo.getIndexClassification() + "_" + idxInfo.getIndexName(),
+            Function.identity()
+        ));
+
     int pageNo = 1;
 
-    try {
-      while (true) {
-        // 최신 지수 정보 요청
-        StockMarketIndexResponse apiResponse = getOpenApiIndexInfo(pageNo, getLastWeekday());
+    while (true) {
+      StockMarketIndexResponse openApiResponse = fetchToOpenApi(pageNo, baseDate);
 
-        if (apiResponse.response().header().resultCode().equals("00")
-            && !apiResponse.response().body().items().item()
-            .isEmpty()) {
-
-          List<StockIndexDto> stockIndexDtoList = apiResponse.response().body().items().item();
-
-          // 지수 정보 갱신
-          for (StockIndexDto stockIndexDto : stockIndexDtoList) {
-            IndexInfo resolvedIndexInfo =
-                indexInfoRepository.findByIndexClassificationAndIndexName(
-                        stockIndexDto.indexClassification(),
-                        stockIndexDto.indexName()
-                    )
-                    .map(idxInfo -> {
-                      idxInfo.updateByOpenAPI(stockIndexDto);
-                      return idxInfo;
-                    })
-                    .orElseGet(() ->
-                        indexInfoRepository.save(
-                            IndexInfo.builder()
-                                .indexClassification(stockIndexDto.indexClassification())
-                                .indexName(stockIndexDto.indexName())
-                                .employedItemsCount(stockIndexDto.employedItemsCount())
-                                .basePointInTime(stockIndexDto.basePointInTime())
-                                .baseIndex(stockIndexDto.baseIndex())
-                                .sourceType(SourceType.OPEN_API)
-                                .favorite(false)
-                                .isDeleted(DeletedStatus.ACTIVE)
-                                .build()
-                        )
-                    );
-
-            // 연동 기록 저장
-            SyncJob syncJob = new SyncJob(resolvedIndexInfo, JobType.INDEX_INFO, null,
-                requestIpAddr,
-                ResultType.SUCCESS);
-            syncJobRepository.save(syncJob);
-            syncJobDtos.add(syncJobMapper.toDto(syncJob));
-          }
-
-          pageNo++;
-
-        } else {
-          break;
-        }
+      List<StockIndexDto> stockIndexDtoList = extractDtoListFromResponse(openApiResponse);
+      if (stockIndexDtoList == null || stockIndexDtoList.isEmpty()) {
+        break;
       }
+
+      // 지수 정보 갱신 및 연동 기록 생성
+      syncJobList.addAll(
+          updateIndexInfo(stockIndexDtoList, indexInfoMap, requestIpAddr)
+      );
+
+      pageNo++;
+    }
+
+    syncJobRepository.saveAll(syncJobList);
+
+    return syncJobList.stream()
+        .map(syncJobMapper::toDto)
+        .toList();
+  }
+
+  private StockMarketIndexResponse fetchToOpenApi(int pageNo, LocalDate baseDate) {
+    try {
+      return openapi.get()
+          .uri(uriBuilder -> uriBuilder
+              .queryParam("pageNo", pageNo)
+              .queryParam("numOfRows", 50)
+              .queryParam("basDt", baseDate.format(DateTimeFormatter.BASIC_ISO_DATE))
+              .build()
+          )
+          .retrieve()
+          .bodyToMono(StockMarketIndexResponse.class)
+          .block(Duration.ofSeconds(5));
+
     } catch (Exception e) {
       throw new BusinessLogicException(ExceptionCode.OPEN_API_REQUEST_FAILED, e.getMessage());
     }
-
-    return syncJobDtos;
   }
 
-  private StockMarketIndexResponse getOpenApiIndexInfo(int pageNo, LocalDate baseDate) {
-    return openapi.get()
-        .uri(urlBuilder -> urlBuilder
-            .queryParam("pageNo", pageNo)
-            .queryParam("numOfRows", 50)
-            .queryParam("basDt", baseDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")))
-            .build()
-        )
-        .retrieve()
-        .bodyToMono(StockMarketIndexResponse.class)
-        .block(Duration.ofSeconds(5));
+  private List<StockIndexDto> extractDtoListFromResponse(StockMarketIndexResponse response) {
+    // 응답 형태가 맞지 않은 경우
+    if (response == null ||
+        response.response() == null ||
+        response.response().body() == null ||
+        response.response().body().items() == null ||
+        response.response().body().items().item() == null) {
+      return null;
+    }
+
+    // 에러코드가 온 경우
+    if (!response.response().header().resultCode().equals("00")) {
+      return null;
+    }
+
+    return response.response().body().items().item();
+  }
+
+  private List<SyncJob> updateIndexInfo(List<StockIndexDto> stockIndexDtoList,
+      Map<String, IndexInfo> indexInfoMap, String requestIpAddr) {
+    List<SyncJob> syncJobList = new ArrayList<>();
+
+    for (StockIndexDto stockIndexDto : stockIndexDtoList) {
+      String key = stockIndexDto.indexClassification() + "_" + stockIndexDto.indexName();
+
+      IndexInfo indexInfo = indexInfoMap.get(key);
+
+      if (indexInfo != null) {
+        indexInfo.updateByOpenAPI(stockIndexDto);
+      } else {
+        // insert
+        indexInfo = indexInfoRepository.save(
+            IndexInfo.builder()
+                .indexClassification(stockIndexDto.indexClassification())
+                .indexName(stockIndexDto.indexName())
+                .employedItemsCount(stockIndexDto.employedItemsCount())
+                .basePointInTime(stockIndexDto.basePointInTime())
+                .baseIndex(stockIndexDto.baseIndex())
+                .sourceType(SourceType.OPEN_API)
+                .favorite(false)
+                .isDeleted(DeletedStatus.ACTIVE)
+                .build()
+        );
+        indexInfoMap.put(key, indexInfo);
+      }
+
+      // 연동 기록 생성
+      syncJobList.add(
+          new SyncJob(indexInfo, JobType.INDEX_INFO, null, requestIpAddr, ResultType.SUCCESS)
+      );
+    }
+
+    return syncJobList;
   }
 
   // 오늘 이전의 가장 마지막 평일 구하기
