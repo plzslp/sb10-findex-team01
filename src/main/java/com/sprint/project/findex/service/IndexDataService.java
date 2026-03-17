@@ -2,6 +2,7 @@ package com.sprint.project.findex.service;
 
 import com.sprint.project.findex.dto.IndexDataCreateRequest;
 import com.sprint.project.findex.dto.IndexDataDto;
+import com.sprint.project.findex.dto.IndexDataUpdateRequest;
 import com.sprint.project.findex.entity.DeletedStatus;
 import com.sprint.project.findex.entity.IndexData;
 import com.sprint.project.findex.entity.IndexInfo;
@@ -25,6 +26,7 @@ public class IndexDataService {
 
   public IndexDataDto createByUser(IndexDataCreateRequest request) {
 
+    //todo 임시로 findById를 호출하고 있음, 추후 Soft Delete 로직 적용 시 달라질 수 있음
     IndexInfo indexInfo = indexInfoRepository.findById(request.indexInfoId())
         .orElseThrow(() -> new NoSuchElementException("지수 정보를 찾을 수 없습니다."));
 
@@ -49,6 +51,30 @@ public class IndexDataService {
     indexDataRepository.save(indexData);
 
     return indexDataMapper.toDto(indexData);
+  }
+
+  public IndexDataDto update(Long id, IndexDataUpdateRequest request) {
+    IndexData indexData = indexDataRepository.findByIdAndIsDeleted(id, DeletedStatus.ACTIVE)
+        .orElseThrow(() -> new NoSuchElementException("지수 데이터를 찾을 수 없습니다."));
+    indexData.updateMarketPrice(request.marketPrice());
+    indexData.updateClosingPrice(request.closingPrice());
+    indexData.updateHighPrice(request.highPrice());
+    indexData.updateLowPrice(request.lowPrice());
+    indexData.updateVersus(request.versus());
+    indexData.updateFluctuationRate(request.fluctuationRate());
+    indexData.updateTradingQuantity(request.tradingQuantity());
+    indexData.updateTradingPrice(request.tradingPrice());
+    indexData.updateMarketTotalAmount(request.marketTotalAmount());
+
+    indexData.updateSourceTypeToUser(); // 소스타입 사용자로 변경
+
+    return indexDataMapper.toDto(indexData);
+  }
+
+  public void delete(Long id) {
+    IndexData indexData = indexDataRepository.findByIdAndIsDeleted(id, DeletedStatus.ACTIVE)
+        .orElseThrow(() -> new NoSuchElementException("지수 데이터를 찾을 수 없습니다."));
+    indexData.updateIsDeleted(DeletedStatus.DELETED);
   }
 
   private void validateDuplicateData(IndexDataCreateRequest request, IndexInfo indexInfo) {
