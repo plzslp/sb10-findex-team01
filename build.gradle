@@ -52,6 +52,8 @@ dependencies {
   testCompileOnly("org.projectlombok:lombok:1.18.42")
   testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
   testImplementation('org.springframework.boot:spring-boot-starter-test')
+
+  runtimeOnly 'io.netty:netty-resolver-dns-native-macos:4.1.101.Final:osx-aarch_64'
 }
 
 test {
