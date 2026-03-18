@@ -152,15 +152,19 @@ public class SyncJobService {
   }
 
   // OpenAPI에서 유효한 값을 줄 수 있는 가장 최신의 날짜 구하기
-  private LocalDate getLastWeekday() {
-    LocalDate baseDate = LocalDate.now();
-    LocalDate minimumDate = baseDate.minusDays(14); // 14일 전까지만 확인함
+  private LocalDate getLastValidDay() {
+    LocalDate baseDate = LocalDate.now().minusDays(1);
+    LocalDate minimumDate = baseDate.minusDays(30); // 30일 전까지만 확인함
+
+    StockMarketIndexRequest stockMarketIndexRequest = StockMarketIndexRequest.builder()
+        .pageNo(1)
+        .numOfRows(10)
+        .baseDate(baseDate.format(DateTimeFormatter.BASIC_ISO_DATE))
+        .build();
 
     while (!baseDate.isBefore(minimumDate)) {
       StockMarketIndexResponse stockMarketIndexResponse = indexSyncService.fetchStockIndex(
-          StockMarketIndexRequest.builder()
-              .baseDate(baseDate.format(DateTimeFormatter.BASIC_ISO_DATE))
-              .build()
+          stockMarketIndexRequest
       );
 
       List<StockIndexDto> responseItems = indexSyncService.extractDtoListFromResponse(
@@ -173,6 +177,7 @@ public class SyncJobService {
       baseDate = baseDate.minusDays(1);
     }
 
-    throw new ApiException(ErrorCode.VALID_BASE_DATE_NOT_FOUND);
+    // exception 대신 오늘 날짜 리턴하도록 함
+    return LocalDate.now();
   }
 }
