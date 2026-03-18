@@ -7,7 +7,8 @@ import java.time.LocalDate;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface IndexDataRepository extends JpaRepository<IndexData, Long> {
+public interface IndexDataRepository extends JpaRepository<IndexData, Long>,
+    IndexDataQDSLRepository {
   boolean existsByIndexInfoAndBaseDateAndIsDeleted(IndexInfo indexInfo, LocalDate baseDate, DeletedStatus deletedStatus);
 
   Optional<IndexData> findByIdAndIsDeleted(Long id, DeletedStatus isDeleted);

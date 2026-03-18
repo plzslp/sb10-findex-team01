@@ -2,6 +2,7 @@ package com.sprint.project.findex.mapper;
 
 import com.sprint.project.findex.dto.dashboard.DashboardQueryDto;
 import com.sprint.project.findex.dto.dashboard.IndexPerformanceDto;
+import com.sprint.project.findex.repository.projection.DashboardRankingProjection;
 
 public final class DashboardMapper {
 
@@ -23,6 +24,16 @@ public final class DashboardMapper {
         fluctuationRate,
         currentPrice,
         beforePrice
+    );
+  }
+
+  public static DashboardQueryDto toQueryDto(DashboardRankingProjection projection) {
+    return new DashboardQueryDto(
+        projection.getId(),
+        projection.getIndexClassification(),
+        projection.getIndexName(),
+        projection.getCurrentClosingPrice(),
+        projection.getBeforeClosingPrice()
     );
   }
 }

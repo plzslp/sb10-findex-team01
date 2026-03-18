@@ -1,10 +1,10 @@
 package com.sprint.project.findex.config;
 
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import jakarta.persistence.EntityManager;
-import org.springframework.context.annotation.Bean;
+import com.sprint.project.findex.dto.SortDirection;
+import com.sprint.project.findex.dto.indexdata.IndexDataSortField;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.format.FormatterRegistry;
 import org.springframework.web.method.HandlerTypePredicate;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -21,8 +21,9 @@ public class FindexConfig implements WebMvcConfigurer {
         HandlerTypePredicate.forBasePackage("com.sprint.project.findex"));
   }
 
-  @Bean
-  public JPAQueryFactory jpaQueryFactory(EntityManager em) {
-    return new JPAQueryFactory(em);
+  @Override
+  public void addFormatters(FormatterRegistry registry) {
+    registry.addConverter(String.class, IndexDataSortField.class, IndexDataSortField::from);
+    registry.addConverter(String.class, SortDirection.class, SortDirection::from);
   }
 }
