@@ -10,6 +10,7 @@ import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.project.findex.dto.SortDirection;
 import com.sprint.project.findex.dto.indexdata.CursorPageIndexDataRequest;
+import com.sprint.project.findex.dto.indexdata.IndexDataCsvExportRequest;
 import com.sprint.project.findex.dto.indexdata.IndexDataSortField;
 import com.sprint.project.findex.entity.DeletedStatus;
 import com.sprint.project.findex.entity.IndexData;
@@ -23,18 +24,17 @@ import org.springframework.data.domain.SliceImpl;
 @RequiredArgsConstructor
 public class IndexDataQDSLRepositoryImpl implements IndexDataQDSLRepository {
 
-  private final JPAQueryFactory jpaQueryFactory;
+  private final JPAQueryFactory queryFactory;
 
   @Override
   public Slice<IndexData> findCursorPage(CursorPageIndexDataRequest request) {
-    List<IndexData> content = jpaQueryFactory
+    List<IndexData> content = queryFactory
         .selectFrom(indexData)
         .where(
             eqIndexInfoId(request.indexInfoId()),
-            betweenDates(request.startTime(), request.endDate()),
-            indexData.isDeleted.eq(DeletedStatus.ACTIVE),
-            cursorOrNull(request)
-
+            cursorOrNull(request),
+            betweenDates(request.startDate(), request.endDate()),
+            indexData.isDeleted.eq(DeletedStatus.ACTIVE)
         )
         .orderBy(
             getOrderSpecifier(request.sortField(), request.sortDirection()),
@@ -52,15 +52,28 @@ public class IndexDataQDSLRepositoryImpl implements IndexDataQDSLRepository {
   }
 
   @Override
+  public List<IndexData> findAllForExport(IndexDataCsvExportRequest request) {
+    return queryFactory
+        .selectFrom(indexData)
+        .where(
+            eqIndexInfoId(request.indexInfoId()),
+            betweenDates(request.startDate(), request.endDate()),
+            indexData.isDeleted.eq(DeletedStatus.ACTIVE)
+            )
+        .orderBy(getOrderSpecifier(request.sortField(), request.sortDirection()))
+        .fetch();
+  }
+
+  @Override
   public Long countByRequest(CursorPageIndexDataRequest request) {
-    return jpaQueryFactory.
+    return queryFactory.
         select(indexData.count())
         .from(indexData)
         .where(
-            indexData.isDeleted.eq(DeletedStatus.ACTIVE),
             eqIndexInfoId(request.indexInfoId()),
-            betweenDates(request.startTime(), request.endDate())
-        )
+            betweenDates(request.startDate(), request.endDate()),
+            indexData.isDeleted.eq(DeletedStatus.ACTIVE)
+            )
         .fetchOne();
   }
 
