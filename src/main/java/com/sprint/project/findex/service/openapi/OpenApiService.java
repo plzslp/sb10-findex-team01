@@ -80,7 +80,6 @@ public class OpenApiService {
 
         buffer.addAll(dtos);
 
-        // 🔹 CHUNK 단위 저장
         while (buffer.size() >= PersistentWorker.CHUNK_SIZE) {
           List<StockIndexDto> subChunk = new ArrayList<>(buffer.subList(0, PersistentWorker.CHUNK_SIZE));
           worker.saveIndexDataBatch(subChunk, indexInfo);

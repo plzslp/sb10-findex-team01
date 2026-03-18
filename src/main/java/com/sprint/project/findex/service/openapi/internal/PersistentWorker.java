@@ -94,52 +94,6 @@ public class PersistentWorker {
     return syncJobs;
   }
 
-  @Transactional
-  public Map<String, IndexInfo> saveOrUpdateIndexInfos(List<StockIndexDto> dtos) {
-    // 1. DB에 존재하는 indexInfo 조회
-    List<String> keys = dtos.stream()
-        .map(dto -> dto.indexClassification() + "_" + dto.indexName())
-        .toList();
-
-    List<IndexInfo> existing = indexInfoRepository.findByKeyIn(keys);
-    Map<String, IndexInfo> indexInfoMap = existing.stream()
-        .collect(Collectors.toMap(
-            i -> i.getIndexClassification() + "_" + i.getIndexName(),
-            i -> i
-        ));
-
-    List<IndexInfo> toInsert = new ArrayList<>();
-
-    for (StockIndexDto dto : dtos) {
-      String key = dto.indexClassification() + "_" + dto.indexName();
-      IndexInfo indexInfo = indexInfoMap.get(key);
-
-      if (indexInfo != null) {
-        indexInfo.updateByOpenAPI(dto);
-      } else {
-        indexInfo = IndexInfo.builder()
-            .indexClassification(dto.indexClassification())
-            .indexName(dto.indexName())
-            .employedItemsCount(dto.employedItemsCount())
-            .basePointInTime(dto.basePointInTime())
-            .baseIndex(dto.baseIndex())
-            .sourceType(SourceType.OPEN_API)
-            .favorite(false)
-            .isDeleted(DeletedStatus.ACTIVE)
-            .build();
-        toInsert.add(indexInfo);
-        indexInfoMap.put(key, indexInfo);
-      }
-    }
-
-    indexInfoRepository.saveAll(toInsert);
-    indexInfoRepository.flush();
-    return indexInfoMap;
-  }
-
-  /**
-   * IndexData를 CHUNK 단위로 batch insert
-   */
   public void saveIndexDataBatch(List<StockIndexDto> dtos, IndexInfo indexInfo) {
     if (dtos.isEmpty()) return;
 
@@ -187,7 +141,6 @@ public class PersistentWorker {
             IndexDataRepository.LastSyncDateProjection::getLastDate
         ));
 
-    // DB에 없으면 createdAt 기준
     for (AutoSyncConfig config : configs) {
       lastSyncMap.putIfAbsent(config.getIndexInfo().getId(),
           config.getIndexInfo().getCreatedAt().atZone(ZoneId.systemDefault()).toLocalDate());
