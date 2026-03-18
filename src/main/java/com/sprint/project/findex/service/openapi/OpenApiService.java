@@ -45,7 +45,6 @@ public class OpenApiService {
     }
   }
 
-  @Transactional
   public void fetchAndSaveByAutoSync(List<AutoSyncConfig> enabledConfigs) {
     DateTimeFormatter formatter = DateTimeFormatter.BASIC_ISO_DATE;
 
@@ -75,7 +74,7 @@ public class OpenApiService {
         StockMarketIndexResponse result = fetch(request).block();
         if (result == null || result.response() == null || result.response().body() == null) break;
 
-        List<StockIndexDto> dtos = result.response().body().items().item();
+        List<StockIndexDto> dtos = getRawIndexDto(result);
         if (dtos.isEmpty()) break;
 
         buffer.addAll(dtos);
@@ -86,9 +85,8 @@ public class OpenApiService {
           buffer.subList(0, PersistentWorker.CHUNK_SIZE).clear();
         }
 
-        int totalCount = result.response().body().totalCount();
-        if (pageNo * numOfRows >= totalCount) break;
-
+        int totalCount = getTotalCount(result);
+        if (!hasNext(pageNo, numOfRows, totalCount)) break;
         pageNo++;
       }
 
