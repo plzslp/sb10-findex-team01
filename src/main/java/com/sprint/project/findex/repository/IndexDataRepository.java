@@ -32,4 +32,9 @@ public interface IndexDataRepository extends JpaRepository<IndexData, Long>,
 
     LocalDate getLastDate();
   }
+
+  List<IndexData> findByIndexInfoAndBaseDateBetweenAndIsDeleted(IndexInfo indexInfo,
+      LocalDate fromDate,
+      LocalDate toDate,
+      DeletedStatus deletedStatus);
 }
