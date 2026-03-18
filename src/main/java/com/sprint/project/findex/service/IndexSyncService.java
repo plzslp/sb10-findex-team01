@@ -97,7 +97,7 @@ public class IndexSyncService {
         // 실패 기록
         syncJobs.add(
             new SyncJob(indexInfo, JobType.INDEX_DATA,
-                finalTargetDate, requestIpAddr, ResultType.FAIL)
+                finalTargetDate, requestIpAddr, ResultType.FAILED)
         );
       } finally {
         targetDate = targetDate.plusDays(1);
