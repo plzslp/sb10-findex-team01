@@ -2,7 +2,6 @@ package com.sprint.project.findex.repository;
 
 import com.sprint.project.findex.dto.dashboard.DashboardQueryDto;
 import com.sprint.project.findex.entity.IndexData;
-import com.sprint.project.findex.entity.DeletedStatus;
 import com.sprint.project.findex.repository.projection.DashboardRankingProjection;
 import java.time.LocalDate;
 import java.util.List;
@@ -14,7 +13,7 @@ public interface DashboardRepository extends JpaRepository<IndexData, Long> {
 
   // 쿼리문 안에서 IndexPerformanceDto를 바로 매핑하려니 계산하는 과정에서 타입 추론 오류발생
   // DashboardQueryDto로 우회해서 서비스에서 계산후 처리하는 방향으로 결정
-  // 기간 내 변화가 있었던 즐겨찾기 지수 조회
+  // targetDate 기준 가장 이른 baseDate를 기준으로 즐겨찾기 지수 조회
   // current = 최신 데이터
   // before = period 시작일 이후 가장 이른 데이터
   @Query("""
@@ -28,30 +27,23 @@ public interface DashboardRepository extends JpaRepository<IndexData, Long> {
       from IndexInfo i
       join IndexData current
         on current.indexInfo.id = i.id
-       and current.isDeleted = :deletedStatus
        and current.baseDate = (
            select max(c.baseDate)
            from IndexData c
            where c.indexInfo.id = i.id
-             and c.isDeleted = :deletedStatus
        )
       join IndexData before
         on before.indexInfo.id = i.id
-       and before.isDeleted = :deletedStatus
        and before.baseDate = (
-           select min(b.baseDate)
+           select max(b.baseDate)
            from IndexData b
            where b.indexInfo.id = i.id
-             and b.baseDate >= :targetDate
-             and b.isDeleted = :deletedStatus
+             and b.baseDate <= :targetDate
        )
       where i.favorite = true
-        and i.isDeleted = :deletedStatus
-        and current.closingPrice <> before.closingPrice
       """)
-  List<DashboardQueryDto> findChangedFavoriteIndexPerformance(
-      @Param("targetDate") LocalDate targetDate,
-      @Param("deletedStatus") DeletedStatus deletedStatus
+  List<DashboardQueryDto> findFavoriteIndexPerformance(
+      @Param("targetDate") LocalDate targetDate
   );
 
   @Query(value = """
@@ -62,8 +54,7 @@ public interface DashboardRepository extends JpaRepository<IndexData, Long> {
                d.closing_price,
                d.base_date
         FROM index_datas d
-        WHERE d.is_deleted = :deletedStatus
-          AND d.base_date <= :today
+        WHERE d.base_date <= :today
         ORDER BY d.index_info_id, d.base_date DESC
     ),
     -- before_data: compareDate 이하 데이터 중에서 지수별 가장 최근 종가 1건을 가져옴
@@ -73,8 +64,7 @@ public interface DashboardRepository extends JpaRepository<IndexData, Long> {
                d.closing_price,
                d.base_date
         FROM index_datas d
-        WHERE d.is_deleted = :deletedStatus
-          AND d.base_date <= :compareDate
+        WHERE d.base_date <= :compareDate
         ORDER BY d.index_info_id, d.base_date DESC
     )
     -- index_infos와 current/before 결과를 조인해서
@@ -90,12 +80,10 @@ public interface DashboardRepository extends JpaRepository<IndexData, Long> {
       ON c.index_info_id = i.id
     JOIN before_data b
       ON b.index_info_id = i.id
-    WHERE i.is_deleted = :deletedStatus
     """, nativeQuery = true)
   List<DashboardRankingProjection> findAllIndexRanking(
       @Param("today") LocalDate today,
-      @Param("compareDate") LocalDate compareDate,
-      @Param("deletedStatus") String deletedStatus
+      @Param("compareDate") LocalDate compareDate
   );
 
   // 특정 지수 1건에 대해서만
@@ -112,7 +100,6 @@ public interface DashboardRepository extends JpaRepository<IndexData, Long> {
         SELECT d.closing_price, d.base_date
         FROM index_datas d
         WHERE d.index_info_id = i.id
-          AND d.is_deleted = :deletedStatus
           AND d.base_date <= :today
         ORDER BY d.base_date DESC
         LIMIT 1
@@ -121,19 +108,16 @@ public interface DashboardRepository extends JpaRepository<IndexData, Long> {
         SELECT d.closing_price, d.base_date
         FROM index_datas d
         WHERE d.index_info_id = i.id
-          AND d.is_deleted = :deletedStatus
           AND d.base_date <= :compareDate
         ORDER BY d.base_date DESC
         LIMIT 1
     ) before_data ON true
     WHERE i.id = :indexInfoId
-      AND i.is_deleted = :deletedStatus
     """, nativeQuery = true)
   List<DashboardRankingProjection> findIndexRankingByIndexInfoId(
       @Param("indexInfoId") Long indexInfoId,
       @Param("today") LocalDate today,
-      @Param("compareDate") LocalDate compareDate,
-      @Param("deletedStatus") String deletedStatus
+      @Param("compareDate") LocalDate compareDate
   );
 
   // 윈도우 함수 사용으로 인한 native 쿼리 작성
@@ -142,7 +126,6 @@ public interface DashboardRepository extends JpaRepository<IndexData, Long> {
         SELECT MAX(base_date) AS end_date
         FROM index_datas
         WHERE index_info_id = :indexInfoId
-          AND is_deleted = :isDeleted
     ),
     range_start AS (
         SELECT
@@ -164,7 +147,6 @@ public interface DashboardRepository extends JpaRepository<IndexData, Long> {
         FROM index_datas id
         JOIN range_start r ON TRUE
         WHERE id.index_info_id = :indexInfoId
-          AND id.is_deleted = :isDeleted
           -- 이동평균 계산을 위해 앞쪽 데이터를 추가 확보
           AND id.base_date >= r.start_date - INTERVAL '20 days'
           AND id.base_date <= r.end_date
@@ -197,7 +179,6 @@ public interface DashboardRepository extends JpaRepository<IndexData, Long> {
   // dto로 바로 매핑이 어렵기 때문에 한 행(row)을 Object 배열로 받음
   List<Object[]> findIndexChartData(
       @Param("indexInfoId") Long indexInfoId,
-      @Param("periodType") String periodType,
-      @Param("isDeleted") String isDeleted
+      @Param("periodType") String periodType
   );
 }
