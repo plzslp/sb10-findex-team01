@@ -9,8 +9,6 @@ import com.sprint.project.findex.dto.syncjob.SyncJobDto;
 import com.sprint.project.findex.dto.syncjob.SyncJobRequestQuery;
 import com.sprint.project.findex.entity.IndexInfo;
 import com.sprint.project.findex.entity.SyncJob;
-import com.sprint.project.findex.global.exception.ApiException;
-import com.sprint.project.findex.global.exception.ErrorCode;
 import com.sprint.project.findex.mapper.SyncJobMapper;
 import com.sprint.project.findex.repository.IndexInfoRepository;
 import com.sprint.project.findex.repository.SyncJobRepository;
@@ -43,7 +41,7 @@ public class SyncJobService {
 
     List<SyncJob> response = new ArrayList<>();
     String requestIpAddr = request.getRemoteAddr();
-    LocalDate baseDate = getLastWeekday();
+    LocalDate baseDate = getLastValidDay();
 
     // DB에서 지수 정보 전체를 map으로 미리 불러오기 (key는 unique 체크)
     Map<String, IndexInfo> indexInfoMap = indexInfoRepository.findAll()
@@ -53,9 +51,10 @@ public class SyncJobService {
             Function.identity()
         ));
 
+    boolean hasMore = true;
     int pageNo = 1;
 
-    while (true) {
+    while (hasMore) {
       StockMarketIndexResponse openApiResponse = indexSyncService.fetchStockIndex(
           StockMarketIndexRequest.builder()
               .pageNo(pageNo)
@@ -67,7 +66,8 @@ public class SyncJobService {
       List<StockIndexDto> stockIndexDtoList = indexSyncService.extractDtoListFromResponse(
           openApiResponse);
       if (stockIndexDtoList == null || stockIndexDtoList.isEmpty()) {
-        break;
+        hasMore = false;
+        continue;
       }
 
       // worker 이용하여 IndexInfo와 SyncJob를 한 트랜잭션 내에서 함께 저장
