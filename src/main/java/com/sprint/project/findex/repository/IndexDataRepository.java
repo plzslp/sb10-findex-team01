@@ -1,6 +1,5 @@
 package com.sprint.project.findex.repository;
 
-import com.sprint.project.findex.entity.DeletedStatus;
 import com.sprint.project.findex.entity.IndexData;
 import com.sprint.project.findex.entity.IndexInfo;
 import java.time.LocalDate;
@@ -33,7 +32,7 @@ public interface IndexDataRepository extends JpaRepository<IndexData, Long>,
     LocalDate getLastDate();
   }
 
-  List<IndexData> findByIndexInfoAndBaseDateBetweenAnd(IndexInfo indexInfo,
+  List<IndexData> findByIndexInfoAndBaseDateBetween(IndexInfo indexInfo,
       LocalDate fromDate,
       LocalDate toDate);
 }

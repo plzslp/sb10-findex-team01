@@ -33,7 +33,7 @@ public class DashboardService {
 
     LocalDate targetDate = calculateTargetDate(LocalDate.now(), periodType);
 
-    return dashboardRepository.findChangedFavoriteIndexPerformance(targetDate)
+    return dashboardRepository.findFavoriteIndexPerformance(targetDate)
         .stream()
         .map(DashboardMapper::toIndexPerformanceDto)
         .toList();
@@ -76,10 +76,7 @@ public class DashboardService {
     IndexInfo index = indexInfoRepository.findById(indexInfoId)
         .orElseThrow(() -> new ApiException(ErrorCode.INDEX_INFO_ID_NOT_FOUND, indexInfoId));
 
-    List<Object[]> rows = dashboardRepository.findIndexChartData(
-        indexInfoId,
-        periodType
-    );
+    List<Object[]> rows = dashboardRepository.findIndexChartData(indexInfoId, periodType);
 
     List<Items> dataPoints = new ArrayList<>();
     List<Items> ma5DataPoints = new ArrayList<>();
