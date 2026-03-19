@@ -24,6 +24,8 @@ public class SyncJobQDSLRepositoryImpl implements SyncJobQDSLRepository {
 
     BooleanBuilder filterBuilder = builderFilterCondition(condition);
 
+    boolean isDesc = "desc".equalsIgnoreCase(condition.sortDirection());
+
     if (condition.cursor() != null && condition.idAfter() != null) {
       BooleanBuilder cursorBuilder = new BooleanBuilder();
 
@@ -31,28 +33,44 @@ public class SyncJobQDSLRepositoryImpl implements SyncJobQDSLRepository {
         // jobTime으로 정렬
         LocalDateTime cursorTime = LocalDateTime.parse(condition.cursor());
 
-        cursorBuilder.or(syncJob.jobTime.lt(cursorTime));
-        cursorBuilder.or(syncJob.jobTime.eq(cursorTime).and(syncJob.id.lt(condition.idAfter())));
+        if (isDesc) {
+          cursorBuilder.or(syncJob.jobTime.lt(cursorTime));
+          cursorBuilder.or(syncJob.jobTime.eq(cursorTime).and(syncJob.id.lt(condition.idAfter())));
+        } else {
+          cursorBuilder.or(syncJob.jobTime.gt(cursorTime));
+          cursorBuilder.or(syncJob.jobTime.eq(cursorTime).and(syncJob.id.gt(condition.idAfter())));
+        }
+
       } else {
         // targetDate로 정렬
         LocalDate cursorDate = LocalDate.parse(condition.cursor());
 
-        cursorBuilder.or(syncJob.targetDate.lt(cursorDate));
-        cursorBuilder.or(syncJob.targetDate.eq(cursorDate).and(syncJob.id.lt(condition.idAfter())));
+        if (isDesc) {
+          cursorBuilder.or(syncJob.targetDate.lt(cursorDate));
+          cursorBuilder.or(
+              syncJob.targetDate.eq(cursorDate).and(syncJob.id.lt(condition.idAfter())));
+        } else {
+          cursorBuilder.or(syncJob.targetDate.gt(cursorDate));
+          cursorBuilder.or(
+              syncJob.targetDate.eq(cursorDate).and(syncJob.id.gt(condition.idAfter())));
+        }
+
       }
       filterBuilder.and(cursorBuilder);
     }
 
-    // 정렬
-    boolean isDesc = "desc".equalsIgnoreCase(condition.sortDirection());
     OrderSpecifier<?> orderSpecifier = "jobTime".equals(condition.sortField())
         ? (isDesc ? syncJob.jobTime.desc() : syncJob.jobTime.asc())
         : (isDesc ? syncJob.targetDate.desc() : syncJob.targetDate.asc());
 
+    OrderSpecifier<Long> idOrder = isDesc
+        ? syncJob.id.desc()
+        : syncJob.id.asc();
+
     return queryFactory
         .selectFrom(syncJob)
         .where(filterBuilder)
-        .orderBy(orderSpecifier, syncJob.id.desc())
+        .orderBy(orderSpecifier, idOrder)
         .limit(condition.size() + 1)
         .fetch();
   }
